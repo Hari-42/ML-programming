@@ -3,65 +3,42 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-import joblib
 
-# -----------------------------  
-# Daten laden
-# -----------------------------
-data = pd.read_csv("shop_data.csv", sep=";")  # Fix 1: sep=";" hinzugefügt
-X = data.drop("buy", axis=1)                  # Fix 2: axis=4 → axis=1
+# ============================================================
+# Teil A – ML-Pipeline bauen
+# ============================================================
+
+# 1. CSV einlesen
+data = pd.read_csv("shop_data.csv", sep=";")
+
+# 2. Features (X) und Zielvariable (y) trennen
+X = data.drop("buy", axis=1)
 y = data["buy"]
 
-# -----------------------------
-# Train / Test Split
-# -----------------------------
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# 3. Train / Test Split (80/20)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
-# -----------------------------
-# Modell 1: Logistische Regression
-# -----------------------------
-log_reg_pipeline = Pipeline([
+# 4. Pipeline: StandardScaler + Logistische Regression
+pipeline = Pipeline([
     ("scaler", StandardScaler()),
     ("model", LogisticRegression())
 ])
 
-log_reg_pipeline.fit(X_train, y_train)
-y_pred_lr = log_reg_pipeline.predict(X_test)
+# 5. Modell trainieren
+pipeline.fit(X_train, y_train)
 
-print("Logistische Regression")
-print("Accuracy:", accuracy_score(y_test, y_pred_lr))
-print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred_lr))
-print("Classification Report:\n", classification_report(y_test, y_pred_lr))
+# 6. Vorhersagen berechnen
+y_pred = pipeline.predict(X_test)
 
-# -----------------------------
-# Modell 2: Decision Tree
-# -----------------------------
-tree_model = DecisionTreeClassifier(random_state=42)
-tree_model.fit(X_train, y_train)
-y_pred_tree = tree_model.predict(X_test)
+# ============================================================
+# Teil B – Bewertung
+# ============================================================
 
-print("\nDecision Tree")
-print("Accuracy:", accuracy_score(y_test, y_pred_tree))
-print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred_tree))
-print("Classification Report:\n", classification_report(y_test, y_pred_tree))
-
-# -----------------------------
-# Bestes Modell speichern
-# -----------------------------
-joblib.dump(log_reg_pipeline, "best_model.joblib")
-
-# -----------------------------
-# Neue Vorhersage
-# -----------------------------
-new_customer = pd.DataFrame([{
-    "age": 32,
-    "past_purchases": 5,
-    "minutes_on_page": 6.5
-}])
-
-loaded_model = joblib.load("best_model.joblib")
-prediction = loaded_model.predict(new_customer)
-
-print("\nVorhersage fuer neuen Kunden:", prediction[0])
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
